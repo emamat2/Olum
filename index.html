@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>آزمون علوم</title>
+    <title>آزمون  علوم</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;700;900&display=swap');
 
@@ -76,9 +76,8 @@
         .app-container {
             width: 100%; 
             max-width: 500px; 
-            /* ===== استفاده از dvh به جای vh برای پشتیبانی از نوار آدرس مرورگر ===== */
             height: 100vh;
-            height: 100dvh; /* Dynamic Viewport Height */
+            height: 100dvh;
             max-height: 100dvh;
             background: #fff; 
             position: relative; 
@@ -131,13 +130,12 @@
         }
         .btn-reset:active { color: var(--danger); }
 
-        /* ===== صفحه آزمون با ساختار جدید ===== */
+        /* ===== صفحه آزمون ===== */
         #quiz-screen { 
             display: flex; 
             flex-direction: column; 
             height: 100%; 
             position: relative;
-            /* ===== اضافه کردن حاشیه امن برای آیفون ===== */
             padding: 20px 20px calc(20px + env(safe-area-inset-bottom));
         }
         
@@ -145,7 +143,7 @@
             display: flex; justify-content: space-between; align-items: center;
             margin-bottom: 10px; font-size: 0.9rem; font-weight: 700; 
             color: var(--text-muted);
-            flex-shrink: 0; /* جلوگیری از فشرده شدن */
+            flex-shrink: 0;
         }
         .level-badge { background: var(--primary); color: white; padding: 4px 12px; border-radius: 20px; font-size: 0.8rem; }
         
@@ -169,21 +167,16 @@
             flex-shrink: 0;
         }
 
-        /* ===== کانتینر اسکرول‌شونده برای گزینه‌ها ===== */
         .options-scroll-container {
             flex-grow: 1;
             overflow-y: auto;
             overflow-x: hidden;
             margin-bottom: 10px;
-            /* اسکرول نرم */
             -webkit-overflow-scrolling: touch;
-            /* پدینگ برای فاصله از لبه‌ها */
             padding: 2px;
-            /* جلوگیری از اسکرول افقی */
             scrollbar-width: thin;
         }
 
-        /* اسکرول‌بار سفارشی (اختیاری) */
         .options-scroll-container::-webkit-scrollbar {
             width: 4px;
         }
@@ -218,16 +211,14 @@
         @keyframes correctPop { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
         @keyframes wrongShake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
 
-        /* ===== دکمه‌ها حالا همیشه در پایین قابل مشاهده ===== */
         .action-buttons {
             display: flex; 
             gap: 10px; 
-            flex-shrink: 0; /* جلوگیری از فشرده شدن */
+            flex-shrink: 0;
             opacity: 0;
             transform: translateY(10px); 
             transition: all 0.3s ease; 
             pointer-events: none;
-            /* حاشیه امن برای آیفون */
             padding-bottom: env(safe-area-inset-bottom);
         }
         .action-buttons.show { opacity: 1; transform: translateY(0); pointer-events: auto; }
@@ -396,13 +387,11 @@
                 متن سوال اینجا قرار می‌گیرد...
             </div>
 
-            <!-- ===== کانتینر اسکرول‌شونده برای گزینه‌ها ===== -->
             <div class="options-scroll-container">
                 <div class="options-grid" id="options-container">
                 </div>
             </div>
 
-            <!-- ===== دکمه‌ها همیشه در پایین قابل مشاهده ===== -->
             <div class="action-buttons" id="action-buttons">
                 <button class="btn-action btn-next" id="next-btn">سوال بعدی</button>
             </div>
@@ -422,7 +411,6 @@
 
     </div>
 
-    <!-- ===== مودال سفارشی ===== -->
     <div class="modal-overlay" id="custom-modal">
         <div class="modal-box">
             <div class="modal-icon">⚠️</div>
@@ -461,7 +449,7 @@
         document.addEventListener('cut', function(e) { e.preventDefault(); return false; });
         document.addEventListener('selectstart', function(e) { e.preventDefault(); return false; });
 
-        // ===== سیستم صدای تیک‌تاک (Web Audio API) =====
+        // ===== سیستم صدای تیک‌تاک (فقط در 6 ثانیه آخر) =====
         let audioCtx = null;
         let tickInterval = null;
         let lastTickTime = 0;
@@ -483,7 +471,8 @@
             osc.connect(gain);
             gain.connect(audioCtx.destination);
             
-            osc.frequency.value = isUrgent ? 1200 : 800;
+            // فرکانس صدا: عادی 900Hz، فوری 1300Hz
+            osc.frequency.value = isUrgent ? 1300 : 900;
             osc.type = 'sine';
             
             const volume = isUrgent ? 0.3 : 0.15;
@@ -499,14 +488,19 @@
             stopTickSound();
             lastTickTime = 0;
             
+            // چک کردن هر 50ms
             tickInterval = setInterval(() => {
-                if (timeLeft <= 10 && timeLeft > 0) {
+                // ===== فقط در 6 ثانیه آخر (یعنی وقتی نوار قرمز می‌شود) =====
+                if (timeLeft <= 6 && timeLeft > 0) {
                     const currentTime = Date.now();
-                    const interval = timeLeft <= 5 ? 500 : 1000;
+                    
+                    // 3 ثانیه آخر: هر 500ms (تندتر و فوری)
+                    // 6 ثانیه آخر (بالاتر از 3): هر 1000ms (عادی)
+                    const interval = timeLeft <= 3 ? 500 : 1000;
                     
                     if (currentTime - lastTickTime >= interval) {
                         lastTickTime = currentTime;
-                        const isUrgent = timeLeft <= 5;
+                        const isUrgent = timeLeft <= 3;
                         playTick(isUrgent);
                     }
                 }
@@ -520,7 +514,7 @@
             }
         }
 
-        // --- دیتابیس سوالات ---
+        // ===== دیتابیس سوالات (فلورئور اصلاح شد به فلوئور) =====
         const questionsLevel1 = [
             { q: "فلز مس چه ویژگی‌هایی دارد؟", options: ["رسانای الکتریکی زیاد", "مقاوم در برابر خوردگی", "قابلیت مفتول شدن", "همه موارد"], correct: 3 },
             { q: "فلز مس چه رنگي دارد؟", options: ["نقره‌ای", "طلایی", "قرمز", "خاکستری"], correct: 2 },
@@ -543,8 +537,8 @@
             { q: "از گاز نیتروژن بیشتر برای تولید چه ماده‌ای استفاده می‌شود؟", options: ["آمونیاک", "اکسیژن", "اسید سولفوریک", "ازون"], correct: 0 },
             { q: "معادله ساخت آمونیاک چیست؟", options: ["گاز نیتروژن + گاز هیدروژن = آمونیاک", "گاز اکسیژن + گاز هیدروژن = آمونیاک", "گاز نیتروژن + گاز اکسیژن = آمونیاک", "گاز هیدروژن + گاز کربن = آمونیاک"], correct: 0 },
             { q: "آمونیاک برای تولید چه چیزهایی کاربرد دارد؟", options: ["کود شیمیایی", "مواد منفجره", "هر دو مورد", "هیچکدام"], correct: 2 },
-            { q: "فلورئور چه نقشی در سلامت انسان دارد؟", options: ["جلوگیری از پوسیدگی دندان", "تقویت استخوان", "تنظیم قند خون", "کمک به هضم غذا"], correct: 0 },
-            { q: "فلورئور به چه چیزی اضافه می‌شود؟", options: ["خمیر دندان", "آب آشامیدنی", "هر دو مورد", "هیچکدام"], correct: 2 },
+            { q: "فلوئور چه نقشی در سلامت انسان دارد؟", options: ["جلوگیری از پوسیدگی دندان", "تقویت استخوان", "تنظیم قند خون", "کمک به هضم غذا"], correct: 0 },
+            { q: "فلوئور به چه چیزی اضافه می‌شود؟", options: ["خمیر دندان", "آب آشامیدنی", "هر دو مورد", "هیچکدام"], correct: 2 },
             { q: "عنصرها بر چه اساسی طبقه‌بندی می‌شوند؟", options: ["تعداد الکترون‌ها", "تعداد نوترون‌ها", "جرم اتمی", "رنگ"], correct: 0 },
             { q: "در جدول تناوبی، عنصرهایی که در یک ستون قرار دارند چه ویژگی مشترکی دارند؟", options: ["خواص شیمیایی مشابه", "خواص فیزیکی مشابه", "تعداد پروتون مشابه", "جرم اتمی مشابه"], correct: 0 },
             { q: "کدام عنصر در ساختن هموگلوبین خون نقش دارد؟", options: ["آهن", "کلسیم", "پتاسیم", "سدیم"], correct: 0 },
@@ -581,7 +575,7 @@
             { q: "گوگرد چه نقشی در ساخت اسید سولفوریک دارد؟", options: ["عنصر اصلی", "عنصر فرعی", "کاتالیزور", "حلال"], correct: 0 },
             { q: "آمونیاک چه نوع ترکیبی است؟", options: ["بازی", "اسیدی", "خنثی", "نمکی"], correct: 0 },
             { q: "از آمونیاک در تولید چه چیزی استفاده می‌شود؟", options: ["کود شیمیایی", "پلاستیک", "شیشه", "کاغذ"], correct: 0 },
-            { q: "فلورئور چه تأثیری بر دندان‌ها دارد؟", options: ["جلوگیری از پوسیدگی", "سفید کردن", "تقویت مینا", "هر دو مورد"], correct: 3 },
+            { q: "فلوئور چه تأثیری بر دندان‌ها دارد؟", options: ["جلوگیری از پوسیدگی", "سفید کردن", "تقویت مینا", "هر دو مورد"], correct: 3 },
             { q: "عنصرها در جدول تناوبی بر اساس چه چیزی مرتب می‌شوند؟", options: ["تعداد الکترون", "تعداد نوترون", "جرم اتمی", "رنگ"], correct: 0 },
             { q: "عنصرهای یک گروه در جدول تناوبی چه ویژگی مشترکی دارند؟", options: ["خواص شیمیایی مشابه", "خواص فیزیکی مشابه", "تعداد پروتون مشابه", "جرم اتمی مشابه"], correct: 0 },
             { q: "کمبود آهن در بدن چه مشکلی ایجاد می‌کند؟", options: ["کم خونی", "پوکی استخوان", "گواتر", "دیابت"], correct: 0 },
@@ -615,7 +609,7 @@
             { q: "گوگرد در کجا یافت می‌شود؟", options: ["دهانه آتش‌فشان", "اعماق دریا", "جنگل", "بیابان"], correct: 0 },
             { q: "از گاز نیتروژن برای تولید چه ماده‌ای استفاده می‌شود؟", options: ["آمونیاک", "اکسیژن", "اسید سولفوریک", "ازون"], correct: 0 },
             { q: "آمونیاک از ترکیب چه گازهایی ساخته می‌شود؟", options: ["نیتروژن و هیدروژن", "نیتروژن و اکسیژن", "اکسیژن و هیدروژن", "کربن و هیدروژن"], correct: 0 },
-            { q: "فلورئور به چه چیزی اضافه می‌شود؟", options: ["خمیر دندان", "آب آشامیدنی", "هر دو", "هیچکدام"], correct: 2 },
+            { q: "فلوئور به چه چیزی اضافه می‌شود؟", options: ["خمیر دندان", "آب آشامیدنی", "هر دو", "هیچکدام"], correct: 2 },
             { q: "کدام عنصر در ساختن هموگلوبین خون نقش دارد؟", options: ["آهن", "کلسیم", "پتاسیم", "سدیم"], correct: 0 },
             { q: "کدام عنصر در رشد استخوان‌ها نقش دارد؟", options: ["کلسیم", "آهن", "پتاسیم", "سدیم"], correct: 0 },
             { q: "کدام عنصر در فعالیت‌های قلبی نقش دارد؟", options: ["پتاسیم", "آهن", "کلسیم", "سدیم"], correct: 0 },
@@ -872,7 +866,6 @@
             
             optionsContainer.innerHTML = '';
             
-            // اسکرول به بالا برای هر سوال جدید
             const scrollContainer = document.querySelector('.options-scroll-container');
             if (scrollContainer) scrollContainer.scrollTop = 0;
             
@@ -1021,4 +1014,4 @@
 
     </script>
 </body>
-    </html>
+</html>
