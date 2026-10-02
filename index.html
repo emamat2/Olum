@@ -2,7 +2,7 @@
 <html lang="fa" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>آزمون هوشمند علوم</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;700;900&display=swap');
@@ -27,17 +27,20 @@
             margin: 0; 
             padding: 0; 
             -webkit-tap-highlight-color: transparent; 
-            /* ===== غیرفعال کردن انتخاب متن ===== */
             -webkit-user-select: none;
             -moz-user-select: none;
             -ms-user-select: none;
             user-select: none;
-            /* ===== غیرفعال کردن کشیدن متن ===== */
             -webkit-user-drag: none;
             -khtml-user-drag: none;
             -moz-user-drag: none;
             -o-user-drag: none;
             user-drag: none;
+        }
+
+        html, body {
+            height: 100%;
+            overflow: hidden;
         }
 
         body {
@@ -47,9 +50,6 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            min-height: 100vh;
-            overflow: hidden;
-            position: relative;
             -webkit-touch-callout: none;
         }
 
@@ -72,14 +72,30 @@
         .hidden { display: none !important; }
         .fade-out { opacity: 0; visibility: hidden; }
 
-        /* --- کانتینر اصلی --- */
+        /* --- کانتینر اصلی با ارتفاع پویا --- */
         .app-container {
-            width: 100%; max-width: 500px; height: 100vh; max-height: 850px;
-            background: #fff; position: relative; display: flex;
-            flex-direction: column; box-shadow: var(--shadow-lg);
-            overflow: hidden; border-radius: 0;
+            width: 100%; 
+            max-width: 500px; 
+            /* ===== استفاده از dvh به جای vh برای پشتیبانی از نوار آدرس مرورگر ===== */
+            height: 100vh;
+            height: 100dvh; /* Dynamic Viewport Height */
+            max-height: 100dvh;
+            background: #fff; 
+            position: relative; 
+            display: flex;
+            flex-direction: column; 
+            box-shadow: var(--shadow-lg);
+            overflow: hidden; 
+            border-radius: 0;
         }
-        @media (min-width: 501px) { .app-container { border-radius: 24px; height: 90vh; } }
+        @media (min-width: 501px) { 
+            .app-container { 
+                border-radius: 24px; 
+                height: 90vh; 
+                height: 90dvh;
+                max-height: 850px;
+            } 
+        }
 
         /* --- صفحه شروع --- */
         #start-screen {
@@ -115,31 +131,72 @@
         }
         .btn-reset:active { color: var(--danger); }
 
-        /* --- صفحه آزمون --- */
-        #quiz-screen { display: flex; flex-direction: column; height: 100%; padding: 20px; position: relative; }
+        /* ===== صفحه آزمون با ساختار جدید ===== */
+        #quiz-screen { 
+            display: flex; 
+            flex-direction: column; 
+            height: 100%; 
+            position: relative;
+            /* ===== اضافه کردن حاشیه امن برای آیفون ===== */
+            padding: 20px 20px calc(20px + env(safe-area-inset-bottom));
+        }
+        
         .quiz-header {
             display: flex; justify-content: space-between; align-items: center;
-            margin-bottom: 10px; font-size: 0.9rem; font-weight: 700; color: var(--text-muted);
+            margin-bottom: 10px; font-size: 0.9rem; font-weight: 700; 
+            color: var(--text-muted);
+            flex-shrink: 0; /* جلوگیری از فشرده شدن */
         }
         .level-badge { background: var(--primary); color: white; padding: 4px 12px; border-radius: 20px; font-size: 0.8rem; }
         
-        .timer-container { width: 100%; height: 8px; background-color: #e0e0e0; border-radius: 10px; margin-bottom: 20px; overflow: hidden; }
+        .timer-container { 
+            width: 100%; 
+            height: 8px; 
+            background-color: #e0e0e0; 
+            border-radius: 10px; 
+            margin-bottom: 15px; 
+            overflow: hidden;
+            flex-shrink: 0;
+        }
         .timer-bar { height: 100%; width: 100%; background-color: var(--success); border-radius: 10px; transition: width 0.1s linear, background-color 0.3s; }
 
         .question-box {
-            background: var(--card-bg); padding: 20px; border-radius: var(--radius);
-            box-shadow: var(--shadow); margin-bottom: 20px; text-align: center;
-            font-size: 1.1rem; font-weight: 700; line-height: 1.6;
-            min-height: 100px; display: flex; align-items: center; justify-content: center;
+            background: var(--card-bg); padding: 18px; border-radius: var(--radius);
+            box-shadow: var(--shadow); margin-bottom: 15px; text-align: center;
+            font-size: 1.05rem; font-weight: 700; line-height: 1.6;
+            min-height: 90px; display: flex; align-items: center; justify-content: center;
             border: 1px solid #f0f0f0;
+            flex-shrink: 0;
+        }
+
+        /* ===== کانتینر اسکرول‌شونده برای گزینه‌ها ===== */
+        .options-scroll-container {
+            flex-grow: 1;
+            overflow-y: auto;
+            overflow-x: hidden;
+            margin-bottom: 10px;
+            /* اسکرول نرم */
+            -webkit-overflow-scrolling: touch;
+            /* پدینگ برای فاصله از لبه‌ها */
+            padding: 2px;
+            /* جلوگیری از اسکرول افقی */
+            scrollbar-width: thin;
+        }
+
+        /* اسکرول‌بار سفارشی (اختیاری) */
+        .options-scroll-container::-webkit-scrollbar {
+            width: 4px;
+        }
+        .options-scroll-container::-webkit-scrollbar-thumb {
+            background: #ccc;
+            border-radius: 4px;
         }
 
         .options-grid { 
             display: grid; 
             grid-template-columns: 1fr 1fr; 
-            gap: 12px; 
-            flex-grow: 1; 
-            align-content: start; 
+            gap: 10px; 
+            align-content: start;
         }
 
         .options-grid.single-column {
@@ -148,10 +205,10 @@
         
         .option-card {
             background: var(--card-bg); border: 2px solid #e0e0e0; border-radius: var(--radius);
-            padding: 16px 10px; text-align: center; font-size: 0.95rem; font-weight: 600;
+            padding: 14px 10px; text-align: center; font-size: 0.9rem; font-weight: 600;
             cursor: pointer; transition: all 0.2s ease; display: flex;
             align-items: center; justify-content: center; box-shadow: var(--shadow);
-            user-select: none; min-height: 70px; word-break: break-word;
+            user-select: none; min-height: 65px; word-break: break-word;
         }
         .option-card:active { transform: scale(0.97); }
         .option-card.correct { background-color: #e6f4ea; border-color: var(--success); color: var(--success); animation: correctPop 0.4s ease; }
@@ -161,9 +218,17 @@
         @keyframes correctPop { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
         @keyframes wrongShake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
 
+        /* ===== دکمه‌ها حالا همیشه در پایین قابل مشاهده ===== */
         .action-buttons {
-            display: flex; gap: 10px; margin-top: 15px; opacity: 0;
-            transform: translateY(10px); transition: all 0.3s ease; pointer-events: none;
+            display: flex; 
+            gap: 10px; 
+            flex-shrink: 0; /* جلوگیری از فشرده شدن */
+            opacity: 0;
+            transform: translateY(10px); 
+            transition: all 0.3s ease; 
+            pointer-events: none;
+            /* حاشیه امن برای آیفون */
+            padding-bottom: env(safe-area-inset-bottom);
         }
         .action-buttons.show { opacity: 1; transform: translateY(0); pointer-events: auto; }
         
@@ -172,7 +237,11 @@
             font-family: inherit; font-size: 1rem; font-weight: 700;
             cursor: pointer; transition: all 0.2s;
         }
-        .btn-next { background-color: var(--primary); color: white; }
+        .btn-next { 
+            background-color: var(--primary); 
+            color: white;
+            box-shadow: 0 4px 14px rgba(66, 133, 244, 0.3);
+        }
         .btn-action:active { transform: scale(0.97); }
 
         /* --- صفحه نتیجه --- */
@@ -327,9 +396,13 @@
                 متن سوال اینجا قرار می‌گیرد...
             </div>
 
-            <div class="options-grid" id="options-container">
+            <!-- ===== کانتینر اسکرول‌شونده برای گزینه‌ها ===== -->
+            <div class="options-scroll-container">
+                <div class="options-grid" id="options-container">
+                </div>
             </div>
 
+            <!-- ===== دکمه‌ها همیشه در پایین قابل مشاهده ===== -->
             <div class="action-buttons" id="action-buttons">
                 <button class="btn-action btn-next" id="next-btn">سوال بعدی</button>
             </div>
@@ -387,6 +460,65 @@
         document.addEventListener('copy', function(e) { e.preventDefault(); return false; });
         document.addEventListener('cut', function(e) { e.preventDefault(); return false; });
         document.addEventListener('selectstart', function(e) { e.preventDefault(); return false; });
+
+        // ===== سیستم صدای تیک‌تاک (Web Audio API) =====
+        let audioCtx = null;
+        let tickInterval = null;
+        let lastTickTime = 0;
+
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+        }
+
+        function playTick(isUrgent) {
+            if (!audioCtx) return;
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            
+            osc.frequency.value = isUrgent ? 1200 : 800;
+            osc.type = 'sine';
+            
+            const volume = isUrgent ? 0.3 : 0.15;
+            
+            gain.gain.setValueAtTime(volume, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.08);
+            
+            osc.start(audioCtx.currentTime);
+            osc.stop(audioCtx.currentTime + 0.08);
+        }
+
+        function startTickSound() {
+            stopTickSound();
+            lastTickTime = 0;
+            
+            tickInterval = setInterval(() => {
+                if (timeLeft <= 10 && timeLeft > 0) {
+                    const currentTime = Date.now();
+                    const interval = timeLeft <= 5 ? 500 : 1000;
+                    
+                    if (currentTime - lastTickTime >= interval) {
+                        lastTickTime = currentTime;
+                        const isUrgent = timeLeft <= 5;
+                        playTick(isUrgent);
+                    }
+                }
+            }, 50);
+        }
+
+        function stopTickSound() {
+            if (tickInterval) {
+                clearInterval(tickInterval);
+                tickInterval = null;
+            }
+        }
 
         // --- دیتابیس سوالات ---
         const questionsLevel1 = [
@@ -606,27 +738,24 @@
 
         // --- رویدادها ---
         startBtn.addEventListener('click', () => {
+            initAudio();
             currentLevel = loadLevel();
             startLevel();
         });
 
-        // ===== نمایش مودال سفارشی به جای confirm =====
         resetBtn.addEventListener('click', () => {
             customModal.classList.add('show');
         });
 
-        // تایید پاک کردن
         modalConfirm.addEventListener('click', () => {
             resetProgress();
             customModal.classList.remove('show');
         });
 
-        // انصراف
         modalCancel.addEventListener('click', () => {
             customModal.classList.remove('show');
         });
 
-        // بستن مودال با کلیک روی پس‌زمینه
         customModal.addEventListener('click', (e) => {
             if (e.target === customModal) {
                 customModal.classList.remove('show');
@@ -687,11 +816,9 @@
             else if (config.difficulty === 2) sourceDB = questionsLevel2;
             else sourceDB = questionsLevel3;
 
-            // فیلتر کردن سوالات استفاده‌شده
             let usedQuestions = getUsedQuestions();
             let availableQuestions = sourceDB.filter(q => !usedQuestions.includes(q.q));
 
-            // اگر تعداد سوالات کافی نبود، لیست استفاده‌شده‌ها را پاک می‌کنیم
             if (availableQuestions.length < config.questionCount) {
                 let usedFromThisLevel = sourceDB.map(q => q.q);
                 let remainingUsed = usedQuestions.filter(q => !usedFromThisLevel.includes(q));
@@ -700,11 +827,9 @@
                 availableQuestions = sourceDB;
             }
 
-            // Shuffle کردن سوالات موجود
             let shuffled = [...availableQuestions].sort(() => Math.random() - 0.5);
             currentQuestions = shuffled.slice(0, Math.min(config.questionCount, shuffled.length));
 
-            // محدود کردن تعداد گزینه‌ها
             currentQuestions = currentQuestions.map(q => {
                 if (q.options.length > config.optionCount) {
                     let wrongOptions = q.options.filter((_, idx) => idx !== q.correct);
@@ -736,6 +861,7 @@
             actionButtons.classList.remove('show');
             
             if (timerInterval) clearInterval(timerInterval);
+            stopTickSound();
             
             const qData = currentQuestions[currentQuestionIndex];
             
@@ -746,6 +872,10 @@
             
             optionsContainer.innerHTML = '';
             
+            // اسکرول به بالا برای هر سوال جدید
+            const scrollContainer = document.querySelector('.options-scroll-container');
+            if (scrollContainer) scrollContainer.scrollTop = 0;
+            
             const avgLength = qData.options.reduce((sum, opt) => sum + opt.length, 0) / qData.options.length;
             if (avgLength > 15) {
                 optionsContainer.classList.add('single-column');
@@ -753,7 +883,6 @@
                 optionsContainer.classList.remove('single-column');
             }
 
-            // Shuffle گزینه‌ها
             let optionsWithIndex = qData.options.map((opt, idx) => ({ text: opt, originalIndex: idx }));
             
             for (let i = optionsWithIndex.length - 1; i > 0; i--) {
@@ -787,6 +916,8 @@
             timerBar.style.width = '100%';
             timerBar.style.backgroundColor = 'var(--success)';
             
+            startTickSound();
+            
             timerInterval = setInterval(() => {
                 timeLeft -= 0.1;
                 const percentage = (timeLeft / maxTime) * 100;
@@ -798,6 +929,7 @@
 
                 if (timeLeft <= 0) {
                     clearInterval(timerInterval);
+                    stopTickSound();
                     timeOut();
                 }
             }, 100);
@@ -806,6 +938,8 @@
         function timeOut() {
             if (isAnswered) return;
             isAnswered = true;
+            
+            stopTickSound();
             
             const qData = currentQuestions[currentQuestionIndex];
             const cards = document.querySelectorAll('.option-card');
@@ -826,6 +960,7 @@
             isAnswered = true;
             
             clearInterval(timerInterval);
+            stopTickSound();
             
             const cards = document.querySelectorAll('.option-card');
             cards.forEach(c => c.classList.add('disabled'));
@@ -848,6 +983,8 @@
         function showResult() {
             quizScreen.classList.add('hidden');
             resultScreen.classList.remove('hidden');
+            
+            stopTickSound();
             
             const percentage = (score / totalQuestionsInLevel) * 100;
             
@@ -884,4 +1021,4 @@
 
     </script>
 </body>
-</html>
+    </html>
