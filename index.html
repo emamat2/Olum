@@ -22,7 +22,23 @@
             --radius: 16px;
         }
 
-        * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+        * { 
+            box-sizing: border-box; 
+            margin: 0; 
+            padding: 0; 
+            -webkit-tap-highlight-color: transparent; 
+            /* ===== غیرفعال کردن انتخاب متن ===== */
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+            /* ===== غیرفعال کردن کشیدن متن ===== */
+            -webkit-user-drag: none;
+            -khtml-user-drag: none;
+            -moz-user-drag: none;
+            -o-user-drag: none;
+            user-drag: none;
+        }
 
         body {
             font-family: 'Vazirmatn', sans-serif;
@@ -34,6 +50,7 @@
             min-height: 100vh;
             overflow: hidden;
             position: relative;
+            -webkit-touch-callout: none;
         }
 
         /* --- صفحه لودینگ --- */
@@ -186,6 +203,95 @@
         .btn-result.primary { background-color: var(--primary); color: white; box-shadow: 0 4px 14px rgba(66, 133, 244, 0.4); }
         .btn-result.secondary { background-color: #f1f3f4; color: var(--text); }
         .btn-result:active { transform: scale(0.96); }
+
+        /* ===== مودال سفارشی (Modal) ===== */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0.3s;
+        }
+        .modal-overlay.show {
+            opacity: 1;
+            visibility: visible;
+        }
+        .modal-box {
+            background: #fff;
+            border-radius: 24px;
+            padding: 30px 24px;
+            max-width: 340px;
+            width: 90%;
+            text-align: center;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+            transform: scale(0.9);
+            transition: transform 0.3s ease;
+        }
+        .modal-overlay.show .modal-box {
+            transform: scale(1);
+        }
+        .modal-icon {
+            width: 60px;
+            height: 60px;
+            background: #fef7e0;
+            color: var(--warning);
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 0 auto 20px;
+            font-size: 28px;
+            animation: pulseWarning 2s ease-in-out infinite;
+        }
+        @keyframes pulseWarning {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+        .modal-title {
+            font-size: 1.3rem;
+            font-weight: 900;
+            color: var(--text);
+            margin-bottom: 10px;
+        }
+        .modal-message {
+            font-size: 0.95rem;
+            color: var(--text-muted);
+            line-height: 1.7;
+            margin-bottom: 25px;
+        }
+        .modal-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .btn-modal {
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: 12px;
+            font-family: inherit;
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn-modal:active { transform: scale(0.97); }
+        .btn-modal.danger {
+            background: var(--danger);
+            color: white;
+            box-shadow: 0 4px 12px rgba(234, 67, 53, 0.3);
+        }
+        .btn-modal.cancel {
+            background: #f1f3f4;
+            color: var(--text);
+        }
     </style>
 </head>
 <body>
@@ -243,7 +349,45 @@
 
     </div>
 
+    <!-- ===== مودال سفارشی ===== -->
+    <div class="modal-overlay" id="custom-modal">
+        <div class="modal-box">
+            <div class="modal-icon">⚠️</div>
+            <div class="modal-title">پاک کردن پیشرفت</div>
+            <div class="modal-message">
+                آیا مطمئن هستید که می‌خواهید پیشرفت خود را پاک کنید و از مرحله ۱ شروع کنید؟<br>
+                این عمل قابل بازگشت نیست.
+            </div>
+            <div class="modal-actions">
+                <button class="btn-modal danger" id="modal-confirm">بله، پاک کن</button>
+                <button class="btn-modal cancel" id="modal-cancel">انصراف</button>
+            </div>
+        </div>
+    </div>
+
     <script>
+        // ===== غیرفعال کردن کلیک راست =====
+        document.addEventListener('contextmenu', function(e) { e.preventDefault(); return false; });
+        
+        // ===== غیرفعال کردن کلیدهای میانبر =====
+        document.addEventListener('keydown', function(e) {
+            if (e.ctrlKey && (e.key === 'c' || e.key === 'C' || e.key === 'x' || e.key === 'X' || 
+                e.key === 'a' || e.key === 'A' || e.key === 'u' || e.key === 'U' || 
+                e.key === 's' || e.key === 'S' || e.key === 'p' || e.key === 'P')) {
+                e.preventDefault(); return false;
+            }
+            if (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'i' || e.key === 'J' || e.key === 'j' || e.key === 'C' || e.key === 'c')) {
+                e.preventDefault(); return false;
+            }
+            if (e.key === 'F12') { e.preventDefault(); return false; }
+        });
+
+        // ===== غیرفعال کردن Drag و Copy و Cut =====
+        document.addEventListener('dragstart', function(e) { e.preventDefault(); return false; });
+        document.addEventListener('copy', function(e) { e.preventDefault(); return false; });
+        document.addEventListener('cut', function(e) { e.preventDefault(); return false; });
+        document.addEventListener('selectstart', function(e) { e.preventDefault(); return false; });
+
         // --- دیتابیس سوالات ---
         const questionsLevel1 = [
             { q: "فلز مس چه ویژگی‌هایی دارد؟", options: ["رسانای الکتریکی زیاد", "مقاوم در برابر خوردگی", "قابلیت مفتول شدن", "همه موارد"], correct: 3 },
@@ -399,6 +543,11 @@
         const resultTitle = document.getElementById('result-title');
         const resultStats = document.getElementById('result-stats');
 
+        // --- المان‌های مودال ---
+        const customModal = document.getElementById('custom-modal');
+        const modalConfirm = document.getElementById('modal-confirm');
+        const modalCancel = document.getElementById('modal-cancel');
+
         // --- توابع ذخیره‌سازی (Local Storage) ---
         function saveLevel(level) {
             localStorage.setItem('quizCurrentLevel', level);
@@ -461,9 +610,26 @@
             startLevel();
         });
 
+        // ===== نمایش مودال سفارشی به جای confirm =====
         resetBtn.addEventListener('click', () => {
-            if (confirm('آیا مطمئن هستید که می‌خواهید پیشرفت خود را پاک کنید و از مرحله ۱ شروع کنید؟')) {
-                resetProgress();
+            customModal.classList.add('show');
+        });
+
+        // تایید پاک کردن
+        modalConfirm.addEventListener('click', () => {
+            resetProgress();
+            customModal.classList.remove('show');
+        });
+
+        // انصراف
+        modalCancel.addEventListener('click', () => {
+            customModal.classList.remove('show');
+        });
+
+        // بستن مودال با کلیک روی پس‌زمینه
+        customModal.addEventListener('click', (e) => {
+            if (e.target === customModal) {
+                customModal.classList.remove('show');
             }
         });
 
@@ -527,14 +693,11 @@
 
             // اگر تعداد سوالات کافی نبود، لیست استفاده‌شده‌ها را پاک می‌کنیم
             if (availableQuestions.length < config.questionCount) {
-                // پاک کردن سوالات استفاده‌شده مربوط به این سطح دشواری
-                // برای سادگی، کل لیست استفاده‌شده را پاک می‌کنیم
-                // اما بهتر است فقط سوالات این سطح را پاک کنیم
                 let usedFromThisLevel = sourceDB.map(q => q.q);
                 let remainingUsed = usedQuestions.filter(q => !usedFromThisLevel.includes(q));
                 saveUsedQuestions(remainingUsed);
                 
-                availableQuestions = sourceDB; // از کل سوالات این سطح استفاده کن
+                availableQuestions = sourceDB;
             }
 
             // Shuffle کردن سوالات موجود
@@ -576,7 +739,6 @@
             
             const qData = currentQuestions[currentQuestionIndex];
             
-            // علامت‌گذاری سوال به عنوان استفاده‌شده
             markQuestionAsUsed(qData.q);
             
             questionCounter.textContent = `سوال ${currentQuestionIndex + 1} از ${totalQuestionsInLevel}`;
@@ -591,7 +753,7 @@
                 optionsContainer.classList.remove('single-column');
             }
 
-            // Shuffle گزینه‌ها (جابجایی تصادفی)
+            // Shuffle گزینه‌ها
             let optionsWithIndex = qData.options.map((opt, idx) => ({ text: opt, originalIndex: idx }));
             
             for (let i = optionsWithIndex.length - 1; i > 0; i--) {
@@ -599,7 +761,6 @@
                 [optionsWithIndex[i], optionsWithIndex[j]] = [optionsWithIndex[j], optionsWithIndex[i]];
             }
 
-            // پیدا کردن ایندکس جدید گزینه درست
             let newCorrectIndex = -1;
             optionsWithIndex.forEach((opt, idx) => {
                 if (opt.originalIndex === qData.correct) {
@@ -607,14 +768,13 @@
                 }
             });
 
-            // ذخیره ایندکس جدید در یک متغیر موقت
             qData.currentCorrectIndex = newCorrectIndex;
 
             optionsWithIndex.forEach((opt, idx) => {
                 const card = document.createElement('div');
                 card.classList.add('option-card');
                 card.textContent = opt.text;
-                card.dataset.index = idx; // ایندکس جدید
+                card.dataset.index = idx;
                 card.addEventListener('click', () => selectOption(card, idx, newCorrectIndex));
                 optionsContainer.appendChild(card);
             });
