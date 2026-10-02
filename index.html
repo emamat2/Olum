@@ -1,0 +1,727 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>آزمون هوشمند علوم</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;700;900&display=swap');
+
+        :root {
+            --primary: #4285F4;
+            --primary-dark: #3367D6;
+            --success: #34A853;
+            --danger: #EA4335;
+            --warning: #FBBC05;
+            --bg: #f8f9fa;
+            --card-bg: #ffffff;
+            --text: #202124;
+            --text-muted: #5f6368;
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            --radius: 16px;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+        body {
+            font-family: 'Vazirmatn', sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* --- صفحه لودینگ --- */
+        #loading-screen {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: #ffffff; display: flex; flex-direction: column;
+            justify-content: center; align-items: center; z-index: 1000;
+            transition: opacity 0.6s ease, visibility 0.6s;
+        }
+        .loader {
+            width: 60px; height: 60px; border: 5px solid #f3f3f3;
+            border-top: 5px solid var(--primary); border-radius: 50%;
+            animation: spin 1s linear infinite; margin-bottom: 20px;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .loading-text { font-size: 1.2rem; color: var(--text-muted); font-weight: 700; animation: pulse 1.5s ease-in-out infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 0.6; } 50% { opacity: 1; } }
+
+        .hidden { display: none !important; }
+        .fade-out { opacity: 0; visibility: hidden; }
+
+        /* --- کانتینر اصلی --- */
+        .app-container {
+            width: 100%; max-width: 500px; height: 100vh; max-height: 850px;
+            background: #fff; position: relative; display: flex;
+            flex-direction: column; box-shadow: var(--shadow-lg);
+            overflow: hidden; border-radius: 0;
+        }
+        @media (min-width: 501px) { .app-container { border-radius: 24px; height: 90vh; } }
+
+        /* --- صفحه شروع --- */
+        #start-screen {
+            display: flex; flex-direction: column; justify-content: center;
+            align-items: center; height: 100%; padding: 20px; text-align: center;
+            background: linear-gradient(135deg, #f0f4ff 0%, #ffffff 100%);
+        }
+        .app-logo {
+            width: 80px; height: 80px; background: var(--primary); border-radius: 20px;
+            display: flex; justify-content: center; align-items: center;
+            margin-bottom: 20px; box-shadow: 0 8px 16px rgba(66, 133, 244, 0.3);
+            animation: float 3s ease-in-out infinite;
+        }
+        .app-logo svg { width: 45px; height: 45px; fill: white; }
+        @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+        #start-screen h1 { font-size: 2rem; font-weight: 900; margin-bottom: 10px; color: var(--text); }
+        #start-screen p { font-size: 1rem; color: var(--text-muted); margin-bottom: 40px; line-height: 1.6; }
+        
+        .btn-primary {
+            background-color: var(--primary); color: white; border: none;
+            padding: 16px 40px; font-size: 1.2rem; font-family: inherit;
+            font-weight: 700; border-radius: 50px; cursor: pointer;
+            box-shadow: 0 4px 14px rgba(66, 133, 244, 0.4);
+            transition: all 0.3s ease; width: 100%; max-width: 250px;
+        }
+        .btn-primary:active { transform: scale(0.96); box-shadow: 0 2px 8px rgba(66, 133, 244, 0.4); }
+
+        .btn-reset {
+            background: transparent; border: none; color: var(--text-muted);
+            font-family: inherit; font-size: 0.9rem; margin-top: 20px;
+            cursor: pointer; text-decoration: underline;
+            padding: 8px;
+        }
+        .btn-reset:active { color: var(--danger); }
+
+        /* --- صفحه آزمون --- */
+        #quiz-screen { display: flex; flex-direction: column; height: 100%; padding: 20px; position: relative; }
+        .quiz-header {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 10px; font-size: 0.9rem; font-weight: 700; color: var(--text-muted);
+        }
+        .level-badge { background: var(--primary); color: white; padding: 4px 12px; border-radius: 20px; font-size: 0.8rem; }
+        
+        .timer-container { width: 100%; height: 8px; background-color: #e0e0e0; border-radius: 10px; margin-bottom: 20px; overflow: hidden; }
+        .timer-bar { height: 100%; width: 100%; background-color: var(--success); border-radius: 10px; transition: width 0.1s linear, background-color 0.3s; }
+
+        .question-box {
+            background: var(--card-bg); padding: 20px; border-radius: var(--radius);
+            box-shadow: var(--shadow); margin-bottom: 20px; text-align: center;
+            font-size: 1.1rem; font-weight: 700; line-height: 1.6;
+            min-height: 100px; display: flex; align-items: center; justify-content: center;
+            border: 1px solid #f0f0f0;
+        }
+
+        .options-grid { 
+            display: grid; 
+            grid-template-columns: 1fr 1fr; 
+            gap: 12px; 
+            flex-grow: 1; 
+            align-content: start; 
+        }
+
+        .options-grid.single-column {
+            grid-template-columns: 1fr;
+        }
+        
+        .option-card {
+            background: var(--card-bg); border: 2px solid #e0e0e0; border-radius: var(--radius);
+            padding: 16px 10px; text-align: center; font-size: 0.95rem; font-weight: 600;
+            cursor: pointer; transition: all 0.2s ease; display: flex;
+            align-items: center; justify-content: center; box-shadow: var(--shadow);
+            user-select: none; min-height: 70px; word-break: break-word;
+        }
+        .option-card:active { transform: scale(0.97); }
+        .option-card.correct { background-color: #e6f4ea; border-color: var(--success); color: var(--success); animation: correctPop 0.4s ease; }
+        .option-card.wrong { background-color: #fce8e6; border-color: var(--danger); color: var(--danger); animation: wrongShake 0.4s ease; }
+        .option-card.disabled { pointer-events: none; opacity: 0.7; }
+
+        @keyframes correctPop { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
+        @keyframes wrongShake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
+
+        .action-buttons {
+            display: flex; gap: 10px; margin-top: 15px; opacity: 0;
+            transform: translateY(10px); transition: all 0.3s ease; pointer-events: none;
+        }
+        .action-buttons.show { opacity: 1; transform: translateY(0); pointer-events: auto; }
+        
+        .btn-action {
+            flex: 1; padding: 14px; border: none; border-radius: 12px;
+            font-family: inherit; font-size: 1rem; font-weight: 700;
+            cursor: pointer; transition: all 0.2s;
+        }
+        .btn-next { background-color: var(--primary); color: white; }
+        .btn-action:active { transform: scale(0.97); }
+
+        /* --- صفحه نتیجه --- */
+        #result-screen {
+            display: flex; flex-direction: column; justify-content: center;
+            align-items: center; height: 100%; padding: 30px; text-align: center;
+            background: #fff; position: absolute; top: 0; left: 0; width: 100%;
+            z-index: 50; border-radius: 24px;
+        }
+        .result-icon {
+            width: 80px; height: 80px; border-radius: 50%; display: flex;
+            justify-content: center; align-items: center; margin-bottom: 20px; font-size: 40px;
+        }
+        .result-icon.good { background: #e6f4ea; color: var(--success); }
+        .result-icon.bad { background: #fce8e6; color: var(--danger); }
+        .result-icon.warning { background: #fef7e0; color: var(--warning); }
+
+        #result-screen h2 { font-size: 1.8rem; margin-bottom: 10px; font-weight: 900; }
+        .result-stats { font-size: 1.1rem; color: var(--text-muted); margin-bottom: 30px; line-height: 1.8; }
+        .result-stats span { font-weight: 900; color: var(--text); }
+
+        .result-actions { display: flex; flex-direction: column; gap: 12px; width: 100%; max-width: 280px; }
+        .btn-result {
+            width: 100%; padding: 16px; border: none; border-radius: 50px;
+            font-family: inherit; font-size: 1.1rem; font-weight: 700;
+            cursor: pointer; transition: all 0.2s;
+        }
+        .btn-result.primary { background-color: var(--primary); color: white; box-shadow: 0 4px 14px rgba(66, 133, 244, 0.4); }
+        .btn-result.secondary { background-color: #f1f3f4; color: var(--text); }
+        .btn-result:active { transform: scale(0.96); }
+    </style>
+</head>
+<body>
+
+    <div id="loading-screen">
+        <div class="loader"></div>
+        <div class="loading-text">در حال آماده‌سازی آزمون...</div>
+    </div>
+
+    <div class="app-container" id="app" style="display: none;">
+        
+        <div id="start-screen">
+            <div class="app-logo">
+                <svg viewBox="0 0 24 24"><path d="M12 3L1 9l4 2.18v6L12 21l7-3.82v-6l2-1.09V17h2V9L12 3zm6.82 6L12 12.72 5.18 9 12 5.28 18.82 9zM17 15.99l-5 2.73-5-2.73v-3.72l5 2.73 5-2.73v3.72z"/></svg>
+            </div>
+            <h1>آزمون علوم</h1>
+            <p>آماده‌ای برای چالش؟<br>با هر مرحله سخت‌تر می‌شه!</p>
+            <button class="btn-primary" id="start-btn">شروع آزمون</button>
+            <button class="btn-reset" id="reset-btn">شروع از اول (پاک کردن پیشرفت)</button>
+        </div>
+
+        <div id="quiz-screen" class="hidden">
+            <div class="quiz-header">
+                <span id="question-counter">سوال 1 از 3</span>
+                <span class="level-badge" id="level-display">مرحله 1</span>
+            </div>
+            
+            <div class="timer-container">
+                <div class="timer-bar" id="timer-bar"></div>
+            </div>
+
+            <div class="question-box" id="question-text">
+                متن سوال اینجا قرار می‌گیرد...
+            </div>
+
+            <div class="options-grid" id="options-container">
+            </div>
+
+            <div class="action-buttons" id="action-buttons">
+                <button class="btn-action btn-next" id="next-btn">سوال بعدی</button>
+            </div>
+        </div>
+
+        <div id="result-screen" class="hidden">
+            <div class="result-icon" id="result-icon">🏆</div>
+            <h2 id="result-title">عالی بود!</h2>
+            <div class="result-stats" id="result-stats">
+                از 3 سوال، 2 تا درست جواب دادی.
+            </div>
+            <div class="result-actions">
+                <button class="btn-result primary" id="next-level-btn">مرحله بعد</button>
+                <button class="btn-result secondary" id="restart-btn">شروع دوباره</button>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // --- دیتابیس سوالات ---
+        const questionsLevel1 = [
+            { q: "فلز مس چه ویژگی‌هایی دارد؟", options: ["رسانای الکتریکی زیاد", "مقاوم در برابر خوردگی", "قابلیت مفتول شدن", "همه موارد"], correct: 3 },
+            { q: "فلز مس چه رنگي دارد؟", options: ["نقره‌ای", "طلایی", "قرمز", "خاکستری"], correct: 2 },
+            { q: "از فلز مس در ساخت چه چیزهایی استفاده می‌شود؟", options: ["ظروف پخت غذا", "سیم‌های برق", "هر دو مورد", "هیچکدام"], correct: 2 },
+            { q: "کدام فلز با اکسیژن ترکیب نمی‌شود؟", options: ["طلا", "مس", "آهن", "منیزیم"], correct: 0 },
+            { q: "کدام فلزات به کندی با اکسیژن ترکیب می‌شوند؟", options: ["طلا و مس", "مس و آهن", "آهن و منیزیم", "منیزیم و طلا"], correct: 1 },
+            { q: "کدام فلز با سرعت با اکسیژن ترکیب می‌شود و می‌سوزد؟", options: ["طلا", "مس", "منیزیم", "آهن"], correct: 2 },
+            { q: "فرمول شیمیایی مس اکسید چیست؟", options: ["CuO", "Cu2O", "CuO2", "Cu2O3"], correct: 0 },
+            { q: "ترکیب مس با اکسیژن چه نام دارد؟", options: ["مس اکسید", "مس هیدروکسید", "مس سولفات", "مس کلرید"], correct: 0 },
+            { q: "ترتیب مقدار گازهای تشکیل‌دهنده هوا به ترتیب از زیاد به کم چیست؟", options: ["نیتروژن، اکسیژن، آرگون، کربن دی اکسید", "اکسیژن، نیتروژن، آرگون، کربن دی اکسید", "نیتروژن، آرگون، اکسیژن، کربن دی اکسید", "کربن دی اکسید، اکسیژن، نیتروژن، آرگون"], correct: 0 },
+            { q: "فرمول مولکولی اکسیژن معمولی چیست؟", options: ["O", "O2", "O3", "CO2"], correct: 1 },
+            { q: "فرمول مولکولی ازون چیست؟", options: ["O", "O2", "O3", "CO2"], correct: 2 },
+            { q: "مولکول اکسیژن معمولی از چند اتم تشکیل شده است؟", options: ["1", "2", "3", "4"], correct: 1 },
+            { q: "مولکول ازون از چند اتم تشکیل شده است؟", options: ["1", "2", "3", "4"], correct: 2 },
+            { q: "گاز ازون در جو چه کاری انجام می‌دهد؟", options: ["جلوگیری از رسیدن پرتوهای خطرناک فرابنفش", "کمک به تنفس", "تولید باران", "گرم کردن زمین"], correct: 0 },
+            { q: "فرمول شیمیایی اسید سولفوریک چیست؟", options: ["H2SO4", "HCl", "H2O", "CO2"], correct: 0 },
+            { q: "اسید سولفوریک از چه عناصری تشکیل شده است؟", options: ["هیدروژن، گوگرد، اکسیژن", "هیدروژن، کربن، اکسیژن", "نیتروژن، گوگرد، اکسیژن", "هیدروژن، فسفر، اکسیژن"], correct: 0 },
+            { q: "گوگرد چه ویژگی‌هایی دارد؟", options: ["جامد زرد رنگ", "مایع بی‌رنگ", "گاز بی‌رنگ", "جامد سیاه"], correct: 0 },
+            { q: "گوگرد در کجا یافت می‌شود؟", options: ["دهانه آتش‌فشان‌ها", "اعماق دریا", "جنگل‌ها", "بیابان‌ها"], correct: 0 },
+            { q: "از گاز نیتروژن بیشتر برای تولید چه ماده‌ای استفاده می‌شود؟", options: ["آمونیاک", "اکسیژن", "اسید سولفوریک", "ازون"], correct: 0 },
+            { q: "معادله ساخت آمونیاک چیست؟", options: ["گاز نیتروژن + گاز هیدروژن = آمونیاک", "گاز اکسیژن + گاز هیدروژن = آمونیاک", "گاز نیتروژن + گاز اکسیژن = آمونیاک", "گاز هیدروژن + گاز کربن = آمونیاک"], correct: 0 },
+            { q: "آمونیاک برای تولید چه چیزهایی کاربرد دارد؟", options: ["کود شیمیایی", "مواد منفجره", "هر دو مورد", "هیچکدام"], correct: 2 },
+            { q: "فلورئور چه نقشی در سلامت انسان دارد؟", options: ["جلوگیری از پوسیدگی دندان", "تقویت استخوان", "تنظیم قند خون", "کمک به هضم غذا"], correct: 0 },
+            { q: "فلورئور به چه چیزی اضافه می‌شود؟", options: ["خمیر دندان", "آب آشامیدنی", "هر دو مورد", "هیچکدام"], correct: 2 },
+            { q: "عنصرها بر چه اساسی طبقه‌بندی می‌شوند؟", options: ["تعداد الکترون‌ها", "تعداد نوترون‌ها", "جرم اتمی", "رنگ"], correct: 0 },
+            { q: "در جدول تناوبی، عنصرهایی که در یک ستون قرار دارند چه ویژگی مشترکی دارند؟", options: ["خواص شیمیایی مشابه", "خواص فیزیکی مشابه", "تعداد پروتون مشابه", "جرم اتمی مشابه"], correct: 0 },
+            { q: "کدام عنصر در ساختن هموگلوبین خون نقش دارد؟", options: ["آهن", "کلسیم", "پتاسیم", "سدیم"], correct: 0 },
+            { q: "نقش آهن در بدن انسان چیست؟", options: ["ساختن هموگلوبین خون", "تنظیم فعالیت‌های بدن", "رشد استخوان‌ها", "فعالیت‌های قلبی"], correct: 0 },
+            { q: "نقش ید در بدن انسان چیست؟", options: ["تنظیم فعالیت‌های بدن", "ساختن هموگلوبین", "رشد استخوان", "فعالیت قلبی"], correct: 0 },
+            { q: "نقش کلسیم در بدن انسان چیست؟", options: ["رشد استخوان‌ها", "ساختن هموگلوبین", "تنظیم فعالیت‌های بدن", "فعالیت‌های قلبی"], correct: 0 },
+            { q: "نقش سدیم و پتاسیم در بدن انسان چیست؟", options: ["فعالیت‌های قلبی", "ساختن هموگلوبین", "رشد استخوان", "تنظیم قند خون"], correct: 0 },
+            { q: "منظور از درشت مولکول چیست؟", options: ["مولکول‌های بسیار بزرگ", "مولکول‌های کوچک", "اتم‌های تنها", "یون‌های مثبت"], correct: 0 },
+            { q: "درشت مولکول‌ها از چه چیزی تشکیل شده‌اند؟", options: ["تعداد بسیار زیادی اتم", "تعداد کمی اتم", "یک اتم", "دو اتم"], correct: 0 },
+            { q: "کدام یک از موارد زیر درشت مولکول است؟", options: ["چربی", "سلولز", "هموگلوبین", "همه موارد"], correct: 3 },
+            { q: "کدام یک از موارد زیر درشت مولکول نیست؟", options: ["موم عسل", "آب", "چربی", "سلولز"], correct: 1 },
+            { q: "منظور از پلیمر یا بسپار چیست؟", options: ["زنجیره بلند از اتصال مولکول‌های کوچک", "مولکول کوچک", "اتم تنها", "یون"], correct: 0 },
+            { q: "پلیمرها به چند دسته تقسیم می‌شوند؟", options: ["طبیعی و مصنوعی", "آلی و معدنی", "جامد و مایع", "فلز و نافلز"], correct: 0 },
+            { q: "کدام یک پلیمر طبیعی است؟", options: ["سلولز", "پلاستیک", "نایلون", "پلی استر"], correct: 0 },
+            { q: "کدام یک پلیمر مصنوعی است؟", options: ["پشم", "ابریشم", "پلاستیک", "پنبه"], correct: 2 },
+            { q: "پلاستیک چه مشکلی برای طبیعت ایجاد می‌کند؟", options: ["تجزیه نمی‌شود", "هوا را آلوده می‌کند", "آب را آلوده می‌کند", "خاک را آلوده می‌کند"], correct: 0 },
+            { q: "راه حل مشکل پلاستیک چیست؟", options: ["بازیافت", "سوزاندن", "دفن در خاک", "ریختن در دریا"], correct: 0 },
+            { q: "شباهت کیسه پلاستیکی و کیسه پنبه‌ای چیست؟", options: ["هر دو پلیمر هستند", "هر دو طبیعی هستند", "هر دو مصنوعی هستند", "هر دو تجزیه می‌شوند"], correct: 0 },
+            { q: "تفاوت کیسه پلاستیکی و کیسه پنبه‌ای چیست؟", options: ["پلاستیکی مصنوعی و پنبه‌ای طبیعی است", "پلاستیکی طبیعی و پنبه‌ای مصنوعی است", "هر دو مصنوعی هستند", "هر دو طبیعی هستند"], correct: 0 }
+        ];
+
+        const questionsLevel2 = [
+            { q: "کدام ویژگی مس آن را برای ساخت سیم‌های برق مناسب می‌کند؟", options: ["رسانایی الکتریکی بالا", "مقاومت در برابر خوردگی", "قابلیت مفتول شدن", "رنگ قرمز"], correct: 0 },
+            { q: "چرا از مس در ساخت ظروف پخت غذا استفاده می‌شود؟", options: ["رسانایی حرارتی بالا", "مقاومت در برابر خوردگی", "قابلیت مفتول شدن", "رنگ قرمز"], correct: 0 },
+            { q: "کدام فلز در برابر خوردگی مقاوم است و در ساخت جواهرات کاربرد دارد؟", options: ["طلا", "مس", "آهن", "منیزیم"], correct: 0 },
+            { q: "واکنش کدام فلز با اکسیژن بسیار کند است؟", options: ["طلا", "منیزیم", "آهن", "مس"], correct: 0 },
+            { q: "کدام فلز با اکسیژن می‌سوزد و نور شدید تولید می‌کند؟", options: ["منیزیم", "طلا", "مس", "آهن"], correct: 0 },
+            { q: "فرمول شیمیایی اکسید مس (II) چیست؟", options: ["CuO", "Cu2O", "CuO2", "Cu2O3"], correct: 0 },
+            { q: "کدام گاز بیشترین حجم هوا را تشکیل می‌دهد؟", options: ["نیتروژن", "اکسیژن", "آرگون", "کربن دی اکسید"], correct: 0 },
+            { q: "کدام گاز کمترین حجم هوا را تشکیل می‌دهد؟", options: ["کربن دی اکسید", "نیتروژن", "اکسیژن", "آرگون"], correct: 0 },
+            { q: "تفاوت اصلی اکسیژن معمولی و ازون در چیست؟", options: ["تعداد اتم‌ها", "رنگ", "بو", "جرم"], correct: 0 },
+            { q: "ازون چه نقشی در جو زمین دارد؟", options: ["محافظت در برابر اشعه فرابنفش", "کمک به تنفس", "تولید باران", "گرم کردن زمین"], correct: 0 },
+            { q: "اسید سولفوریک چه نوع ترکیبی است؟", options: ["اسیدی", "بازی", "خنثی", "نمکی"], correct: 0 },
+            { q: "گوگرد چه نقشی در ساخت اسید سولفوریک دارد؟", options: ["عنصر اصلی", "عنصر فرعی", "کاتالیزور", "حلال"], correct: 0 },
+            { q: "آمونیاک چه نوع ترکیبی است؟", options: ["بازی", "اسیدی", "خنثی", "نمکی"], correct: 0 },
+            { q: "از آمونیاک در تولید چه چیزی استفاده می‌شود؟", options: ["کود شیمیایی", "پلاستیک", "شیشه", "کاغذ"], correct: 0 },
+            { q: "فلورئور چه تأثیری بر دندان‌ها دارد؟", options: ["جلوگیری از پوسیدگی", "سفید کردن", "تقویت مینا", "هر دو مورد"], correct: 3 },
+            { q: "عنصرها در جدول تناوبی بر اساس چه چیزی مرتب می‌شوند؟", options: ["تعداد الکترون", "تعداد نوترون", "جرم اتمی", "رنگ"], correct: 0 },
+            { q: "عنصرهای یک گروه در جدول تناوبی چه ویژگی مشترکی دارند؟", options: ["خواص شیمیایی مشابه", "خواص فیزیکی مشابه", "تعداد پروتون مشابه", "جرم اتمی مشابه"], correct: 0 },
+            { q: "کمبود آهن در بدن چه مشکلی ایجاد می‌کند؟", options: ["کم خونی", "پوکی استخوان", "گواتر", "دیابت"], correct: 0 },
+            { q: "کمبود ید در بدن چه مشکلی ایجاد می‌کند؟", options: ["گواتر", "کم خونی", "پوکی استخوان", "دیابت"], correct: 0 },
+            { q: "کمبود کلسیم در بدن چه مشکلی ایجاد می‌کند؟", options: ["پوکی استخوان", "کم خونی", "گواتر", "دیابت"], correct: 0 },
+            { q: "نقش سدیم و پتاسیم در بدن چیست؟", options: ["تنظیم فعالیت‌های قلبی", "ساختن هموگلوبین", "رشد استخوان", "تنظیم قند خون"], correct: 0 },
+            { q: "درشت مولکول‌ها معمولاً از چه نوع اتم‌هایی تشکیل شده‌اند؟", options: ["کربن", "آهن", "طلا", "مس"], correct: 0 },
+            { q: "کدام یک از موارد زیر پلیمر نیست؟", options: ["آب", "سلولز", "پلاستیک", "پروتئین"], correct: 0 },
+            { q: "پلیمرهای طبیعی چه ویژگی دارند؟", options: ["در طبیعت یافت می‌شوند", "در آزمایشگاه ساخته می‌شوند", "از نفت ساخته می‌شوند", "تجزیه نمی‌شوند"], correct: 0 },
+            { q: "پلیمرهای مصنوعی چه ویژگی دارند؟", options: ["در آزمایشگاه ساخته می‌شوند", "در طبیعت یافت می‌شوند", "تجزیه می‌شوند", "از گیاهان گرفته می‌شوند"], correct: 0 },
+            { q: "مشکل اصلی پلاستیک‌ها برای محیط زیست چیست؟", options: ["تجزیه نشدن", "آلودگی هوا", "آلودگی آب", "آلودگی خاک"], correct: 0 },
+            { q: "راه حل اصلی مشکل پلاستیک‌ها چیست؟", options: ["بازیافت", "سوزاندن", "دفن", "ریختن در دریا"], correct: 0 },
+            { q: "کیسه پلاستیکی و کیسه پنبه‌ای چه شباهتی دارند؟", options: ["هر دو پلیمر هستند", "هر دو طبیعی هستند", "هر دو مصنوعی هستند", "هر دو تجزیه می‌شوند"], correct: 0 },
+            { q: "کیسه پلاستیکی و کیسه پنبه‌ای چه تفاوتی دارند؟", options: ["پلاستیکی مصنوعی و پنبه‌ای طبیعی است", "پلاستیکی طبیعی و پنبه‌ای مصنوعی است", "هر دو مصنوعی هستند", "هر دو طبیعی هستند"], correct: 0 },
+            { q: "کدام یک از موارد زیر درشت مولکول است؟", options: ["پروتئین", "آب", "نمک", "شکر"], correct: 0 },
+            { q: "کدام یک از موارد زیر پلیمر طبیعی است؟", options: ["ابریشم", "نایلون", "پلاستیک", "پلی استر"], correct: 0 },
+            { q: "کدام یک از موارد زیر پلیمر مصنوعی است؟", options: ["نایلون", "پشم", "پنبه", "ابریشم"], correct: 0 }
+        ];
+
+        const questionsLevel3 = [
+            { q: "کدام ویژگی مس آن را برای ساخت سیم برق مناسب می‌کند؟", options: ["رسانایی الکتریکی بالا", "رسانایی الکتریکی پایین", "مقاومت در برابر خوردگی", "قابلیت مفتول شدن"], correct: 0 },
+            { q: "کدام ویژگی مس آن را برای ساخت ظروف پخت غذا مناسب می‌کند؟", options: ["رسانایی حرارتی بالا", "رسانایی حرارتی پایین", "مقاومت در برابر خوردگی", "قابلیت مفتول شدن"], correct: 0 },
+            { q: "کدام فلز در برابر خوردگی مقاوم است؟", options: ["طلا", "مس", "آهن", "منیزیم"], correct: 0 },
+            { q: "کدام فلز با اکسیژن ترکیب نمی‌شود؟", options: ["طلا", "مس", "آهن", "منیزیم"], correct: 0 },
+            { q: "کدام فلز به کندی با اکسیژن ترکیب می‌شود؟", options: ["مس", "طلا", "آهن", "منیزیم"], correct: 0 },
+            { q: "کدام فلز با سرعت با اکسیژن ترکیب می‌شود؟", options: ["منیزیم", "طلا", "مس", "آهن"], correct: 0 },
+            { q: "فرمول شیمیایی مس اکسید چیست؟", options: ["CuO", "Cu2O", "CuO2", "Cu2O3"], correct: 0 },
+            { q: "فرمول شیمیایی اسید سولفوریک چیست؟", options: ["H2SO4", "H2SO3", "H2S", "H2O"], correct: 0 },
+            { q: "اسید سولفوریک از کدام عناصر تشکیل شده است؟", options: ["هیدروژن، گوگرد، اکسیژن", "هیدروژن، گوگرد، نیتروژن", "هیدروژن، کربن، اکسیژن", "هیدروژن، فسفر، اکسیژن"], correct: 0 },
+            { q: "گوگرد چه رنگی دارد؟", options: ["زرد", "سفید", "قرمز", "سیاه"], correct: 0 },
+            { q: "گوگرد در کجا یافت می‌شود؟", options: ["دهانه آتش‌فشان", "اعماق دریا", "جنگل", "بیابان"], correct: 0 },
+            { q: "از گاز نیتروژن برای تولید چه ماده‌ای استفاده می‌شود؟", options: ["آمونیاک", "اکسیژن", "اسید سولفوریک", "ازون"], correct: 0 },
+            { q: "آمونیاک از ترکیب چه گازهایی ساخته می‌شود؟", options: ["نیتروژن و هیدروژن", "نیتروژن و اکسیژن", "اکسیژن و هیدروژن", "کربن و هیدروژن"], correct: 0 },
+            { q: "فلورئور به چه چیزی اضافه می‌شود؟", options: ["خمیر دندان", "آب آشامیدنی", "هر دو", "هیچکدام"], correct: 2 },
+            { q: "کدام عنصر در ساختن هموگلوبین خون نقش دارد؟", options: ["آهن", "کلسیم", "پتاسیم", "سدیم"], correct: 0 },
+            { q: "کدام عنصر در رشد استخوان‌ها نقش دارد؟", options: ["کلسیم", "آهن", "پتاسیم", "سدیم"], correct: 0 },
+            { q: "کدام عنصر در فعالیت‌های قلبی نقش دارد؟", options: ["پتاسیم", "آهن", "کلسیم", "سدیم"], correct: 0 },
+            { q: "کدام عنصر در تنظیم فعالیت‌های بدن نقش دارد؟", options: ["ید", "آهن", "کلسیم", "پتاسیم"], correct: 0 },
+            { q: "درشت مولکول‌ها از چه چیزی تشکیل شده‌اند؟", options: ["تعداد بسیار زیادی اتم", "تعداد بسیار کمی اتم", "یک اتم", "دو اتم"], correct: 0 },
+            { q: "کدام یک درشت مولکول نیست؟", options: ["آب", "چربی", "سلولز", "هموگلوبین"], correct: 0 },
+            { q: "پلیمرها به چند دسته تقسیم می‌شوند؟", options: ["طبیعی و مصنوعی", "آلی و معدنی", "جامد و مایع", "فلز و نافلز"], correct: 0 },
+            { q: "کدام یک پلیمر طبیعی است؟", options: ["سلولز", "پلاستیک", "نایلون", "پلی استر"], correct: 0 },
+            { q: "کدام یک پلیمر مصنوعی است؟", options: ["پلاستیک", "پشم", "ابریشم", "پنبه"], correct: 0 },
+            { q: "مشکل اصلی پلاستیک در طبیعت چیست؟", options: ["تجزیه نمی‌شود", "تجزیه می‌شود", "آلودگی هوا", "آلودگی آب"], correct: 0 },
+            { q: "راه حل مشکل پلاستیک چیست؟", options: ["بازیافت", "سوزاندن", "دفن", "ریختن در دریا"], correct: 0 },
+            { q: "شباهت کیسه پلاستیکی و پنبه‌ای چیست؟", options: ["هر دو پلیمر هستند", "هر دو طبیعی هستند", "هر دو مصنوعی هستند", "هر دو تجزیه می‌شوند"], correct: 0 },
+            { q: "تفاوت کیسه پلاستیکی و پنبه‌ای چیست؟", options: ["پلاستیکی مصنوعی و پنبه‌ای طبیعی است", "پلاستیکی طبیعی و پنبه‌ای مصنوعی است", "هر دو مصنوعی هستند", "هر دو طبیعی هستند"], correct: 0 },
+            { q: "کدام گاز بیشترین حجم هوا را تشکیل می‌دهد؟", options: ["نیتروژن", "اکسیژن", "آرگون", "کربن دی اکسید"], correct: 0 },
+            { q: "کدام گاز کمترین حجم هوا را تشکیل می‌دهد؟", options: ["کربن دی اکسید", "نیتروژن", "اکسیژن", "آرگون"], correct: 0 },
+            { q: "تفاوت اکسیژن معمولی و ازون در چیست؟", options: ["تعداد اتم", "رنگ", "بو", "جرم"], correct: 0 },
+            { q: "ازون چه نقشی در جو دارد؟", options: ["محافظت در برابر اشعه فرابنفش", "کمک به تنفس", "تولید باران", "گرم کردن زمین"], correct: 0 },
+            { q: "عنصرها بر چه اساسی طبقه‌بندی می‌شوند؟", options: ["تعداد الکترون", "تعداد نوترون", "جرم اتمی", "رنگ"], correct: 0 },
+            { q: "عنصرهای یک گروه چه ویژگی مشترکی دارند؟", options: ["خواص شیمیایی مشابه", "خواص فیزیکی مشابه", "تعداد پروتون مشابه", "جرم اتمی مشابه"], correct: 0 },
+            { q: "کمبود آهن چه مشکلی ایجاد می‌کند؟", options: ["کم خونی", "پوکی استخوان", "گواتر", "دیابت"], correct: 0 },
+            { q: "کمبود ید چه مشکلی ایجاد می‌کند؟", options: ["گواتر", "کم خونی", "پوکی استخوان", "دیابت"], correct: 0 },
+            { q: "کمبود کلسیم چه مشکلی ایجاد می‌کند؟", options: ["پوکی استخوان", "کم خونی", "گواتر", "دیابت"], correct: 0 }
+        ];
+
+        // --- متغیرهای وضعیت ---
+        let currentLevel = 1;
+        let currentQuestionIndex = 0;
+        let score = 0;
+        let totalQuestionsInLevel = 0;
+        let timerInterval = null;
+        let timeLeft = 0;
+        let maxTime = 20;
+        let currentQuestions = [];
+        let isAnswered = false;
+
+        // --- المان‌های DOM ---
+        const loadingScreen = document.getElementById('loading-screen');
+        const app = document.getElementById('app');
+        const startScreen = document.getElementById('start-screen');
+        const quizScreen = document.getElementById('quiz-screen');
+        const resultScreen = document.getElementById('result-screen');
+        
+        const startBtn = document.getElementById('start-btn');
+        const resetBtn = document.getElementById('reset-btn');
+        const nextBtn = document.getElementById('next-btn');
+        const restartBtn = document.getElementById('restart-btn');
+        const nextLevelBtn = document.getElementById('next-level-btn');
+        
+        const questionCounter = document.getElementById('question-counter');
+        const levelDisplay = document.getElementById('level-display');
+        const questionText = document.getElementById('question-text');
+        const optionsContainer = document.getElementById('options-container');
+        const timerBar = document.getElementById('timer-bar');
+        const actionButtons = document.getElementById('action-buttons');
+        
+        const resultIcon = document.getElementById('result-icon');
+        const resultTitle = document.getElementById('result-title');
+        const resultStats = document.getElementById('result-stats');
+
+        // --- توابع ذخیره‌سازی (Local Storage) ---
+        function saveLevel(level) {
+            localStorage.setItem('quizCurrentLevel', level);
+        }
+
+        function loadLevel() {
+            const saved = localStorage.getItem('quizCurrentLevel');
+            return saved ? parseInt(saved) : 1;
+        }
+
+        function resetProgress() {
+            localStorage.removeItem('quizCurrentLevel');
+            localStorage.removeItem('usedQuestions');
+            currentLevel = 1;
+            updateStartButton();
+        }
+
+        function updateStartButton() {
+            const savedLevel = loadLevel();
+            if (savedLevel > 1) {
+                startBtn.textContent = `ادامه مرحله ${savedLevel}`;
+                resetBtn.style.display = 'block';
+            } else {
+                startBtn.textContent = 'شروع آزمون';
+                resetBtn.style.display = 'none';
+            }
+        }
+
+        // --- توابع مدیریت سوالات استفاده‌شده ---
+        function getUsedQuestions() {
+            const used = localStorage.getItem('usedQuestions');
+            return used ? JSON.parse(used) : [];
+        }
+
+        function saveUsedQuestions(used) {
+            localStorage.setItem('usedQuestions', JSON.stringify(used));
+        }
+
+        function markQuestionAsUsed(questionText) {
+            let used = getUsedQuestions();
+            if (!used.includes(questionText)) {
+                used.push(questionText);
+                saveUsedQuestions(used);
+            }
+        }
+
+        // --- توابع اولیه ---
+        window.onload = () => {
+            setTimeout(() => {
+                loadingScreen.classList.add('fade-out');
+                app.style.display = 'flex';
+                setTimeout(() => { loadingScreen.style.display = 'none'; }, 600);
+            }, 1500);
+            updateStartButton();
+        };
+
+        // --- رویدادها ---
+        startBtn.addEventListener('click', () => {
+            currentLevel = loadLevel();
+            startLevel();
+        });
+
+        resetBtn.addEventListener('click', () => {
+            if (confirm('آیا مطمئن هستید که می‌خواهید پیشرفت خود را پاک کنید و از مرحله ۱ شروع کنید؟')) {
+                resetProgress();
+            }
+        });
+
+        nextLevelBtn.addEventListener('click', () => {
+            currentLevel++;
+            saveLevel(currentLevel);
+            startLevel();
+        });
+
+        restartBtn.addEventListener('click', () => {
+            startLevel();
+        });
+
+        nextBtn.addEventListener('click', () => {
+            if (currentQuestionIndex < currentQuestions.length - 1) {
+                currentQuestionIndex++;
+                loadQuestion();
+            } else {
+                showResult();
+            }
+        });
+
+        // --- منطق مرحله ---
+        function getLevelConfig(level) {
+            let optionCount = 4;
+            if (level >= 2) optionCount = 5;
+            if (level >= 7) optionCount = 6;
+            if (level >= 12) optionCount = 7;
+
+            let questionCount = 5;
+            if (level >= 4) questionCount = 6;
+            if (level >= 9) questionCount = 7;
+            if (level >= 14) questionCount = 8;
+
+            let time = 20;
+            if (level >= 5) time = 19;
+            if (level >= 10) time = 18;
+            if (level >= 15) time = 17;
+
+            let difficulty = 1;
+            if (level >= 3) difficulty = 2;
+            if (level >= 7) difficulty = 3;
+            if (level >= 11) difficulty = 2;
+            if (level >= 15) difficulty = 3;
+
+            return { optionCount, questionCount, time, difficulty };
+        }
+
+        function startLevel() {
+            const config = getLevelConfig(currentLevel);
+            maxTime = config.time;
+            
+            let sourceDB;
+            if (config.difficulty === 1) sourceDB = questionsLevel1;
+            else if (config.difficulty === 2) sourceDB = questionsLevel2;
+            else sourceDB = questionsLevel3;
+
+            // فیلتر کردن سوالات استفاده‌شده
+            let usedQuestions = getUsedQuestions();
+            let availableQuestions = sourceDB.filter(q => !usedQuestions.includes(q.q));
+
+            // اگر تعداد سوالات کافی نبود، لیست استفاده‌شده‌ها را پاک می‌کنیم
+            if (availableQuestions.length < config.questionCount) {
+                // پاک کردن سوالات استفاده‌شده مربوط به این سطح دشواری
+                // برای سادگی، کل لیست استفاده‌شده را پاک می‌کنیم
+                // اما بهتر است فقط سوالات این سطح را پاک کنیم
+                let usedFromThisLevel = sourceDB.map(q => q.q);
+                let remainingUsed = usedQuestions.filter(q => !usedFromThisLevel.includes(q));
+                saveUsedQuestions(remainingUsed);
+                
+                availableQuestions = sourceDB; // از کل سوالات این سطح استفاده کن
+            }
+
+            // Shuffle کردن سوالات موجود
+            let shuffled = [...availableQuestions].sort(() => Math.random() - 0.5);
+            currentQuestions = shuffled.slice(0, Math.min(config.questionCount, shuffled.length));
+
+            // محدود کردن تعداد گزینه‌ها
+            currentQuestions = currentQuestions.map(q => {
+                if (q.options.length > config.optionCount) {
+                    let wrongOptions = q.options.filter((_, idx) => idx !== q.correct);
+                    let correctOption = q.options[q.correct];
+                    let neededWrong = config.optionCount - 1;
+                    let selectedWrong = wrongOptions.sort(() => Math.random() - 0.5).slice(0, neededWrong);
+                    let newOptions = [correctOption, ...selectedWrong];
+                    let finalOptions = [...newOptions].sort(() => Math.random() - 0.5);
+                    let finalCorrectIndex = finalOptions.indexOf(correctOption);
+                    return { q: q.q, options: finalOptions, correct: finalCorrectIndex };
+                }
+                return q;
+            });
+
+            currentQuestionIndex = 0;
+            score = 0;
+            totalQuestionsInLevel = currentQuestions.length;
+
+            startScreen.classList.add('hidden');
+            resultScreen.classList.add('hidden');
+            quizScreen.classList.remove('hidden');
+            
+            levelDisplay.textContent = `مرحله ${currentLevel}`;
+            loadQuestion();
+        }
+
+        function loadQuestion() {
+            isAnswered = false;
+            actionButtons.classList.remove('show');
+            
+            if (timerInterval) clearInterval(timerInterval);
+            
+            const qData = currentQuestions[currentQuestionIndex];
+            
+            // علامت‌گذاری سوال به عنوان استفاده‌شده
+            markQuestionAsUsed(qData.q);
+            
+            questionCounter.textContent = `سوال ${currentQuestionIndex + 1} از ${totalQuestionsInLevel}`;
+            questionText.textContent = qData.q;
+            
+            optionsContainer.innerHTML = '';
+            
+            const avgLength = qData.options.reduce((sum, opt) => sum + opt.length, 0) / qData.options.length;
+            if (avgLength > 15) {
+                optionsContainer.classList.add('single-column');
+            } else {
+                optionsContainer.classList.remove('single-column');
+            }
+
+            // Shuffle گزینه‌ها (جابجایی تصادفی)
+            let optionsWithIndex = qData.options.map((opt, idx) => ({ text: opt, originalIndex: idx }));
+            
+            for (let i = optionsWithIndex.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [optionsWithIndex[i], optionsWithIndex[j]] = [optionsWithIndex[j], optionsWithIndex[i]];
+            }
+
+            // پیدا کردن ایندکس جدید گزینه درست
+            let newCorrectIndex = -1;
+            optionsWithIndex.forEach((opt, idx) => {
+                if (opt.originalIndex === qData.correct) {
+                    newCorrectIndex = idx;
+                }
+            });
+
+            // ذخیره ایندکس جدید در یک متغیر موقت
+            qData.currentCorrectIndex = newCorrectIndex;
+
+            optionsWithIndex.forEach((opt, idx) => {
+                const card = document.createElement('div');
+                card.classList.add('option-card');
+                card.textContent = opt.text;
+                card.dataset.index = idx; // ایندکس جدید
+                card.addEventListener('click', () => selectOption(card, idx, newCorrectIndex));
+                optionsContainer.appendChild(card);
+            });
+
+            startTimer();
+        }
+
+        function startTimer() {
+            timeLeft = maxTime;
+            timerBar.style.width = '100%';
+            timerBar.style.backgroundColor = 'var(--success)';
+            
+            timerInterval = setInterval(() => {
+                timeLeft -= 0.1;
+                const percentage = (timeLeft / maxTime) * 100;
+                timerBar.style.width = percentage + '%';
+                
+                if (percentage < 30) timerBar.style.backgroundColor = 'var(--danger)';
+                else if (percentage < 60) timerBar.style.backgroundColor = 'var(--warning)';
+                else timerBar.style.backgroundColor = 'var(--success)';
+
+                if (timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    timeOut();
+                }
+            }, 100);
+        }
+
+        function timeOut() {
+            if (isAnswered) return;
+            isAnswered = true;
+            
+            const qData = currentQuestions[currentQuestionIndex];
+            const cards = document.querySelectorAll('.option-card');
+            const correctIdx = qData.currentCorrectIndex;
+            
+            cards.forEach((card, idx) => {
+                card.classList.add('disabled');
+                if (idx === correctIdx) {
+                    card.classList.add('correct');
+                }
+            });
+
+            actionButtons.classList.add('show');
+        }
+
+        function selectOption(card, selectedIndex, correctIndex) {
+            if (isAnswered) return;
+            isAnswered = true;
+            
+            clearInterval(timerInterval);
+            
+            const cards = document.querySelectorAll('.option-card');
+            cards.forEach(c => c.classList.add('disabled'));
+
+            if (selectedIndex === correctIndex) {
+                card.classList.add('correct');
+                score++;
+            } else {
+                card.classList.add('wrong');
+                cards.forEach((c, idx) => {
+                    if (idx === correctIndex) {
+                        c.classList.add('correct');
+                    }
+                });
+            }
+
+            actionButtons.classList.add('show');
+        }
+
+        function showResult() {
+            quizScreen.classList.add('hidden');
+            resultScreen.classList.remove('hidden');
+            
+            const percentage = (score / totalQuestionsInLevel) * 100;
+            
+            if (percentage >= 90) {
+                resultIcon.textContent = '🏆';
+                resultIcon.className = 'result-icon good';
+                resultTitle.textContent = 'عالی!';
+            } else if (percentage >= 70) {
+                resultIcon.textContent = '🌟';
+                resultIcon.className = 'result-icon good';
+                resultTitle.textContent = 'خیلی خوب!';
+            } else if (percentage >= 50) {
+                resultIcon.textContent = '👍';
+                resultIcon.className = 'result-icon warning';
+                resultTitle.textContent = 'قابل قبول';
+            } else {
+                resultIcon.textContent = '💪';
+                resultIcon.className = 'result-icon bad';
+                resultTitle.textContent = 'نیاز به تلاش بیشتر!';
+            }
+
+            resultStats.innerHTML = `
+                از ${totalQuestionsInLevel} سوال، <span>${score}</span> تا درست جواب دادی.<br>
+                ${score} درست، ${totalQuestionsInLevel - score} غلط
+            `;
+
+            if (percentage >= 50) {
+                nextLevelBtn.style.display = 'block';
+                nextLevelBtn.textContent = `مرحله ${currentLevel + 1}`;
+            } else {
+                nextLevelBtn.style.display = 'none';
+            }
+        }
+
+    </script>
+</body>
+</html>
